@@ -3,3 +3,20 @@
   apt:
     update_cache: yes
     upgrade: dist
+
+- name: Install locales package
+  apt:
+    name: locales
+    state: present
+    update_cache: yes
+  become: yes
+
+- name: Generate en_US.UTF-8 locale
+  command: locale-gen en_US.UTF-8
+  become: yes
+  args:
+    creates: /usr/lib/locale/en_US.utf8
+
+- name: Update system locale to en_US.UTF-8
+  command: update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
+  become: yes

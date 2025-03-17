@@ -5,6 +5,10 @@
     image: jc21/nginx-proxy-manager:latest
     state: started
     restart_policy: always
+    ports:
+      - "8080:80"
+      - "81:81"
+      - "4343:443"
     volumes:
       - npm_data:/data
       - npm_letsencrypt:/etc/letsencrypt

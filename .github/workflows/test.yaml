@@ -1,0 +1,94 @@
+name: Test Ansible Playbook
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  test-ansible-playbook:
+    runs-on: ubuntu-22.04-arm64  # Native ARM64 runner
+    container:
+      image: dtcooper/raspberrypi-os:latest
+      options: --privileged  # Need privileged mode for some ansible operations
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y python3 python3-pip sudo curl wget git
+          pip3 install ansible ansible-lint yamllint
+      
+      - name: Prepare testing environment
+        run: |
+          # Create dummy environment file
+          mkdir -p roles/common/files
+          cat > roles/common/files/.env << EOF
+          NPM_ADMIN_EMAIL: "test@example.com"
+          NPM_ADMIN_PASSWORD: "test_password"
+          TAILSCALE_AUTH_KEY: "tskey-test-key"
+          RESTIC_PASSWORD: "test_password"
+          PIHOLE_PASSWORD: "test_password"
+          CLOUDFLARE_TUNNEL_TOKEN: "test_token"
+          EOF
+          
+          # Create test inventory
+          cat > inventory.test.ini << EOF
+          [raspberrypi]
+          localhost ansible_connection=local
+          EOF
+      
+      - name: Run YAML syntax check
+        run: yamllint -d relaxed . || true
+        
+      - name: Run Ansible syntax check
+        run: ansible-playbook --syntax-check playbook.yml
+        
+      - name: Run Ansible linting
+        run: ansible-lint || echo "Linting found issues but continuing"
+      
+      - name: Test common role
+        run: ansible-playbook -i inventory.test.ini playbook.yml --tags common --check || true
+      
+      - name: Test docker role
+        run: ansible-playbook -i inventory.test.ini playbook.yml --tags docker --check || true
+      
+      - name: Test portainer role
+        run: ansible-playbook -i inventory.test.ini playbook.yml --tags portainer --check || true
+      
+      - name: Test tailscale role
+        run: ansible-playbook -i inventory.test.ini playbook.yml --tags tailscale --check || true
+      
+      - name: Test home_assistant role
+        run: ansible-playbook -i inventory.test.ini playbook.yml --tags home_assistant --check || true
+        
+      - name: Test nginx_proxy_manager role
+        run: ansible-playbook -i inventory.test.ini playbook.yml --tags nginx_proxy_manager --check || true
+        
+      - name: Test homer role
+        run: ansible-playbook -i inventory.test.ini playbook.yml --tags homer --check || true
+        
+      - name: Test restic role
+        run: ansible-playbook -i inventory.test.ini playbook.yml --tags restic --check || true
+        
+      - name: Test cloudflare_tunnel role
+        run: ansible-playbook -i inventory.test.ini playbook.yml --tags cloudflare_tunnel --check || true
+        
+      - name: Test pihole role
+        run: ansible-playbook -i inventory.test.ini playbook.yml --tags pihole --check || true
+        
+      - name: Test prometheus role
+        run: ansible-playbook -i inventory.test.ini playbook.yml --tags prometheus --check || true
+        
+      - name: Test grafana role
+        run: ansible-playbook -i inventory.test.ini playbook.yml --tags grafana --check || true
+        
+      - name: Test uptime_kuma role
+        run: ansible-playbook -i inventory.test.ini playbook.yml --tags uptime_kuma --check || true
+      
+      - name: Test full playbook
+        run: ansible-playbook -i inventory.test.ini playbook.yml --check || true

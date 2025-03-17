@@ -1,16 +1,86 @@
 ---
-- name: Install Docker
-  apt:
-    name: docker.io
-    state: present
+- name: Update apt cache
+  ansible.builtin.shell: sudo apt-get update
+  become: yes
 
-- name: Install Docker Compose
-  apt:
-    name: docker-compose
-    state: present
+- name: Install prerequisites (ca-certificates and curl)
+  ansible.builtin.shell: sudo apt-get install -y ca-certificates curl
+  become: yes
 
-- name: Ensure Docker service is running
+- name: Create /etc/apt/keyrings directory
+  ansible.builtin.shell: sudo install -m 0755 -d /etc/apt/keyrings
+  become: yes
+
+- name: Download Docker's official GPG key
+  ansible.builtin.shell: sudo curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
+  become: yes
+
+- name: Set read permissions on the Docker GPG key
+  ansible.builtin.shell: sudo chmod a+r /etc/apt/keyrings/docker.asc
+  become: yes
+
+- name: Add Docker APT repository
+  ansible.builtin.shell: |
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+  become: yes
+
+- name: Update apt cache after adding Docker repository
+  ansible.builtin.shell: sudo apt-get update
+  become: yes
+
+- name: Install Docker packages
+  apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+    state: present
+    update_cache: yes
+
+- name: Ensure Docker service is started and enabled
   service:
     name: docker
     state: started
-    enabled: true
+    enabled: yes
+
+# Docker post-installation steps
+- name: Create /etc/docker directory if it does not exist
+  file:
+    path: /etc/docker
+    state: directory
+    mode: '0755'
+
+- name: Add custom Docker daemon configuration
+  copy:
+    dest: /etc/docker/daemon.json
+    content: |
+      {
+          "log-driver": "json-file",
+          "log-opts": {
+              "max-size": "100m"
+          }
+      }
+    mode: '0644'
+    
+- name: Restart Docker
+  service:
+    name: docker
+    state: restarted
+
+- name: Add current user to the docker group
+  user:
+    name: "{{ ansible_user_id }}"
+    groups: docker
+    append: yes
+
+- name: Reload group membership for current session (if needed)
+  command: newgrp docker
+  become: yes
+  ignore_errors: yes
+
+- name: Restart Docker
+  service:
+    name: docker
+    state: restarted

@@ -13,7 +13,6 @@
     - nginx_proxy_manager
     - homer
     - restic
-    - netdata
     - cloudflare_tunnel
     - pihole
     - prometheus

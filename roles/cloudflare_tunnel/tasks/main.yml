@@ -1,8 +1,23 @@
 ---
-- name: Install cloudflared
-  apt:
-    name: cloudflared
+- name: Download cloudflared deb package
+  ansible.builtin.get_url:
+    url: "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm64.deb"
+    dest: "/tmp/cloudflared.deb"
+    mode: "0755"
+
+- name: Install cloudflared deb package
+  ansible.builtin.command: dpkg -i /tmp/cloudflared.deb
+  register: dpkg_result
+  failed_when: false
+
+- name: Install missing dependencies if required
+  ansible.builtin.apt:
+    update_cache: yes
+    upgrade: no
     state: present
+  when: dpkg_result.rc != 0
 
 - name: Configure Cloudflare Tunnel
-  shell: cloudflared service install {{ CLOUDFLARE_TUNNEL_TOKEN }}
+  ansible.builtin.command: >
+    cloudflared service uninstall
+    cloudflared service install "{{ CLOUDFLARE_TUNNEL_TOKEN }}"
