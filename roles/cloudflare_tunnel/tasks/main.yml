@@ -1,0 +1,8 @@
+---
+- name: Install cloudflared
+  apt:
+    name: cloudflared
+    state: present
+
+- name: Configure Cloudflare Tunnel
+  shell: cloudflared service install {{ CLOUDFLARE_TUNNEL_TOKEN }}

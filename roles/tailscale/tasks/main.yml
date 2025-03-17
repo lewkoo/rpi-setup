@@ -1,0 +1,8 @@
+---
+- name: Install Tailscale
+  apt:
+    name: tailscale
+    state: present
+
+- name: Start and authenticate Tailscale
+  command: "tailscale up --authkey={{ TAILSCALE_AUTH_KEY }}"

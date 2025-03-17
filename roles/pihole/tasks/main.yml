@@ -1,0 +1,11 @@
+---
+- name: Deploy Pi-hole
+  docker_container:
+    name: pihole
+    image: pihole/pihole:latest
+    state: started
+    restart_policy: always
+    network_mode: host
+    env:
+      TZ: "UTC"
+      WEBPASSWORD: "{{ PIHOLE_PASSWORD }}"

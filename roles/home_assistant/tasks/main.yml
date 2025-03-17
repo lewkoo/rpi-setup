@@ -1,0 +1,11 @@
+---
+- name: Deploy Home Assistant
+  docker_container:
+    name: homeassistant
+    image: ghcr.io/home-assistant/home-assistant:stable
+    state: started
+    restart_policy: always
+    network_mode: host
+    volumes:
+      - /home/pi/homeassistant:/config
+    privileged: true

@@ -1,0 +1,9 @@
+---
+- name: Deploy Homer
+  docker_container:
+    name: homer
+    image: b4bz/homer:latest
+    state: started
+    restart_policy: always
+    volumes:
+      - /home/pi/homer:/www/assets
