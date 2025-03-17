@@ -1,0 +1,21 @@
+---
+- name: Setup Raspberry Pi Services
+  hosts: raspberrypi
+  become: true
+  vars_files:
+    - roles/common/files/.env
+  roles:
+    - common
+    - docker
+    - portainer
+    - tailscale
+    - home_assistant
+    - nginx_proxy_manager
+    - homer
+    - restic
+    - netdata
+    - cloudflare_tunnel
+    - pihole
+    - prometheus
+    - grafana
+    - uptime_kuma

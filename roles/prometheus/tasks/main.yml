@@ -1,0 +1,11 @@
+---
+- name: Deploy Prometheus
+  docker_container:
+    name: prometheus
+    image: prom/prometheus
+    state: started
+    restart_policy: always
+    ports:
+      - "9090:9090"
+    volumes:
+      - prometheus_data:/etc/prometheus
